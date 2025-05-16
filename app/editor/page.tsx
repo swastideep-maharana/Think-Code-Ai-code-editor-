@@ -274,166 +274,152 @@ export default function CodeEditor() {
                 fontFamily: "Fira Code, monospace",
                 wordWrap: "on",
                 automaticLayout: true,
-                smoothScrolling: true,
-                tabSize: 2,
-                formatOnPaste: true,
-                formatOnType: true,
+                lineNumbers: "on",
+                scrollBeyondLastLine: false,
               }}
-              height="100%"
-              width="100%"
             />
           </section>
-          {/* Preview Panel */}
-          {showPreview && (
-            <section className="flex flex-col w-1/3 border-r border-gray-300 dark:border-gray-700">
-              <div className="p-2 bg-gray-200 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 flex justify-between items-center">
-                <h2 className="font-semibold">Live Preview</h2>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowPreview(false)}
-                  aria-label="Close Preview"
-                >
-                  ✕
-                </Button>
-              </div>
-              <iframe
-                title="Live preview"
-                ref={iframeRef}
-                sandbox="allow-scripts allow-same-origin"
-                className="flex-grow w-full border-none"
+          {/* Preview & Panels */}
+          <section className="flex flex-col w-2/3 p-4 gap-4 overflow-auto">
+            {/* Toolbar toggles */}
+            <div className="flex items-center gap-6 mb-2 flex-wrap">
+              <Checkbox
+                id="toggle-ai"
+                checked={showAI}
+                onCheckedChange={(checked) => setShowAI(!!checked)}
               />
-            </section>
-          )}
+              <label htmlFor="toggle-ai" className="cursor-pointer select-none">
+                Show AI Panel
+              </label>
 
-          {/* AI Panel */}
-          {showAI && (
-            <section className="flex flex-col w-1/3 bg-gray-50 dark:bg-gray-900 p-3">
-              <div className="flex justify-between items-center mb-2">
-                <h2 className="text-lg font-semibold">AI Code Generator</h2>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowAI(false)}
-                  aria-label="Close AI Panel"
-                >
-                  ✕
-                </Button>
-              </div>
-
-              <Textarea
-                ref={promptRef}
-                placeholder="Describe what code you want AI to generate..."
-                value={prompt}
-                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                  setPrompt(e.target.value)
-                }
-                onFocus={handlePromptFocus}
-                className="mb-2"
-                rows={4}
+              <Checkbox
+                id="toggle-preview"
+                checked={showPreview}
+                onCheckedChange={(checked) => setShowPreview(!!checked)}
               />
+              <label
+                htmlFor="toggle-preview"
+                className="cursor-pointer select-none"
+              >
+                Show Live Preview
+              </label>
 
-              <Button onClick={generateAI} disabled={loading} className="mb-3">
-                <BoltIcon className="w-5 h-5 mr-2" />
-                {loading ? "Generating..." : "Generate AI Code"}
-              </Button>
+              <Checkbox
+                id="toggle-output"
+                checked={showOutput}
+                onCheckedChange={(checked) => setShowOutput(!!checked)}
+              />
+              <label
+                htmlFor="toggle-output"
+                className="cursor-pointer select-none"
+              >
+                Show AI Output
+              </label>
 
-              {aiOutput && (
-                <div className="flex flex-col flex-grow overflow-auto rounded border border-gray-300 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 font-mono text-sm whitespace-pre-wrap">
-                  {aiOutput}
-                </div>
+              <Checkbox
+                id="toggle-tutorials"
+                checked={showTutorials}
+                onCheckedChange={(checked) => setShowTutorials(!!checked)}
+              />
+              <label
+                htmlFor="toggle-tutorials"
+                className="cursor-pointer select-none"
+              >
+                Show Tutorials
+              </label>
+            </div>
+
+            {/* Panels */}
+            <div className="flex flex-grow gap-4 overflow-auto">
+              {/* AI Panel */}
+              {showAI && (
+                <section className="flex flex-col w-1/2 bg-gray-50 dark:bg-gray-800 rounded-md p-3 shadow-inner">
+                  <h2 className="font-semibold mb-2 flex items-center gap-2">
+                    <BoltIcon className="w-5 h-5 text-yellow-500" /> AI Code
+                    Generator
+                  </h2>
+
+                  <Textarea
+                    ref={promptRef}
+                    value={prompt}
+                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                      setPrompt(e.target.value)
+                    }
+                    onFocus={handlePromptFocus}
+                    placeholder="Describe what you want the AI to generate..."
+                    rows={3}
+                    className="mb-2 resize-none"
+                    disabled={loading}
+                  />
+
+                  <div className="flex gap-2 mb-2">
+                    <Button
+                      onClick={generateAI}
+                      disabled={loading}
+                      className="flex-1"
+                    >
+                      {loading ? "Generating..." : "Generate"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setPrompt("");
+                        setAiOutput("");
+                        promptRef.current?.focus();
+                      }}
+                      disabled={loading}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+
+                  {showOutput && (
+                    <div className="flex flex-col flex-grow overflow-auto bg-white dark:bg-gray-900 rounded-md p-3 font-mono text-sm whitespace-pre-wrap border border-gray-300 dark:border-gray-700">
+                      {aiOutput || "AI generated code will appear here..."}
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={appendAIOutput}
+                    disabled={!aiOutput.trim()}
+                    className="mt-2"
+                  >
+                    Append AI Output to Code
+                  </Button>
+                </section>
               )}
 
-              {aiOutput && (
-                <Button
-                  onClick={appendAIOutput}
-                  className="mt-2"
-                  variant="outline"
-                  disabled={loading}
-                >
-                  Append to Code
-                </Button>
+              {/* Live Preview */}
+              {showPreview && (
+                <section className="flex flex-col w-1/2 bg-white dark:bg-gray-900 rounded-md overflow-hidden border border-gray-300 dark:border-gray-700">
+                  <h2 className="font-semibold p-2 border-b border-gray-300 dark:border-gray-700">
+                    Live Preview
+                  </h2>
+                  <iframe
+                    title="Live Preview"
+                    ref={iframeRef}
+                    sandbox="allow-scripts allow-same-origin"
+                    className="flex-grow w-full"
+                  />
+                </section>
               )}
-            </section>
-          )}
 
-          {/* Output Console */}
-          {showOutput && (
-            <section className="flex flex-col w-1/3 bg-black text-green-400 font-mono text-sm font-bold p-4 overflow-auto">
-              {/* This area can show logs - implement below */}
-              {/* You can add your log messages here */}
-              <p>No output yet.</p>
-            </section>
-          )}
-
-          {/* Tutorials Panel */}
-          {showTutorials && (
-            <section className="fixed top-16 right-4 w-80 max-h-[80vh] overflow-auto rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg p-4 z-50">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-xl font-bold">Tutorials</h3>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setShowTutorials(false)}
-                  aria-label="Close Tutorials"
-                >
-                  ✕
-                </Button>
-              </div>
-              {tutorials.map(({ title, content }, i) => (
-                <div
-                  key={i}
-                  className="mb-4 last:mb-0 p-3 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-                  onClick={() => {
-                    setShowTutorials(false);
-                    alert(content); // simple tutorial display - can be improved
-                  }}
-                >
-                  <h4 className="font-semibold">{title}</h4>
-                </div>
-              ))}
-            </section>
-          )}
+              {/* Tutorials */}
+              {showTutorials && (
+                <section className="w-1/3 bg-gray-50 dark:bg-gray-800 rounded-md p-3 shadow-inner overflow-auto">
+                  <h2 className="font-semibold mb-2">Tutorials</h2>
+                  <ul className="list-disc list-inside space-y-2">
+                    {tutorials.map(({ title, content }, idx) => (
+                      <li key={idx}>
+                        <strong>{title}</strong>: {content}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          </section>
         </main>
-
-        {/* Footer Toolbar */}
-        <footer className="flex justify-center items-center gap-3 p-3 border-t border-gray-300 dark:border-gray-700 bg-opacity-80 backdrop-blur-sm">
-          <Checkbox
-            id="togglePreview"
-            checked={showPreview}
-            onCheckedChange={(val) => setShowPreview(Boolean(val))}
-          />
-          <label htmlFor="togglePreview" className="select-none">
-            Live Preview
-          </label>
-
-          <Checkbox
-            id="toggleAI"
-            checked={showAI}
-            onCheckedChange={(val) => setShowAI(Boolean(val))}
-          />
-          <label htmlFor="toggleAI" className="select-none">
-            AI Generator
-          </label>
-
-          <Checkbox
-            id="toggleOutput"
-            checked={showOutput}
-            onCheckedChange={(val) => setShowOutput(Boolean(val))}
-          />
-          <label htmlFor="toggleOutput" className="select-none">
-            Output Console
-          </label>
-
-          <Checkbox
-            id="toggleTutorials"
-            checked={showTutorials}
-            onCheckedChange={(val) => setShowTutorials(Boolean(val))}
-          />
-          <label htmlFor="toggleTutorials" className="select-none">
-            Tutorials
-          </label>
-        </footer>
       </div>
     </ProtectedRoute>
   );
