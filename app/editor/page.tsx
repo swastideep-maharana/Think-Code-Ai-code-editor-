@@ -391,15 +391,14 @@ export default function CodeEditor() {
 
               {/* Live Preview */}
               {showPreview && (
-                <section className="flex flex-col w-1/2 bg-white dark:bg-gray-900 rounded-md overflow-hidden border border-gray-300 dark:border-gray-700">
-                  <h2 className="font-semibold p-2 border-b border-gray-300 dark:border-gray-700">
-                    Live Preview
-                  </h2>
+                <section className="flex flex-col w-1/2 bg-white dark:bg-gray-900 rounded-md p-3 shadow-inner overflow-auto">
+                  <h2 className="font-semibold mb-2">Live Preview</h2>
                   <iframe
-                    title="Live Preview"
                     ref={iframeRef}
+                    title="Live Preview"
+                    className="flex-grow w-full h-full border rounded-md"
                     sandbox="allow-scripts allow-same-origin"
-                    className="flex-grow w-full"
+                    style={{ minHeight: "300px", border: "1px solid #ccc" }}
                   />
                 </section>
               )}

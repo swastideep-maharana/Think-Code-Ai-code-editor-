@@ -11,8 +11,8 @@ export async function POST(req: Request) {
       });
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-
+    // Use server-only env variable (no NEXT_PUBLIC_)
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: "Missing Gemini API key in environment" }),
@@ -24,16 +24,15 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // ✅ free-tier supported
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    // 🔥 Prompt Template for Code Tasks
     const fullPrompt = `
-You are a coding assistant. Help with the following request. Be clear, efficient, and include only necessary explanations.
+You are an expert coding assistant. Your task is to provide clear, concise, and well-structured code solutions with comments and best practices. Avoid unnecessary explanations.
 
-Task:
+Problem / Request:
 ${prompt}
 
-Respond with well-formatted code, comments, and suggestions if needed.
+Please provide the complete code solution and comments where appropriate.
     `.trim();
 
     const result = await model.generateContent({
@@ -45,8 +44,7 @@ Respond with well-formatted code, comments, and suggestions if needed.
       ],
     });
 
-    const response = await result.response;
-    const text = await response.text();
+    const text = await result.response.text();
 
     return new Response(JSON.stringify({ output: text }), {
       status: 200,
