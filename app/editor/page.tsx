@@ -286,7 +286,7 @@ export default function CodeEditor() {
               <Checkbox
                 id="toggle-ai"
                 checked={showAI}
-                onCheckedChange={(checked) => setShowAI(!!checked)}
+                onCheckedChange={(checked) => setShowAI(checked === true)}
               />
               <label htmlFor="toggle-ai" className="cursor-pointer select-none">
                 Show AI Panel
@@ -295,7 +295,7 @@ export default function CodeEditor() {
               <Checkbox
                 id="toggle-preview"
                 checked={showPreview}
-                onCheckedChange={(checked) => setShowPreview(!!checked)}
+                onCheckedChange={(checked) => setShowPreview(checked === true)}
               />
               <label
                 htmlFor="toggle-preview"
@@ -307,7 +307,7 @@ export default function CodeEditor() {
               <Checkbox
                 id="toggle-output"
                 checked={showOutput}
-                onCheckedChange={(checked) => setShowOutput(!!checked)}
+                onCheckedChange={(checked) => setShowOutput(checked === true)}
               />
               <label
                 htmlFor="toggle-output"
@@ -319,7 +319,7 @@ export default function CodeEditor() {
               <Checkbox
                 id="toggle-tutorials"
                 checked={showTutorials}
-                onCheckedChange={(checked) => setShowTutorials(!!checked)}
+                onCheckedChange={(checked) => setShowTutorials(checked === true)}
               />
               <label
                 htmlFor="toggle-tutorials"
