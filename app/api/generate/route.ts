@@ -50,16 +50,15 @@ Please provide the complete code solution and comments where appropriate.
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error: any) {
-    console.error("Generate API error:", error);
-    return new Response(
-      JSON.stringify({
-        error: error?.message || "An error occurred while generating content",
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+  } catch (error: unknown) {
+    const err = error as { message: string; status?: number };
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: err.status || 500,
+    });
   }
+}
+
+interface ApiError {
+  message: string;
+  status?: number;
 }

@@ -9,6 +9,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+interface AuthError {
+  message: string;
+  code?: string;
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,9 +30,17 @@ export default function LoginPage() {
     try {
       await signIn(email, password);
       router.push("/dashboard");
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      if (err && typeof err === "object" && "message" in err) {
+        handleError(err as AuthError);
+      } else {
+        handleError({ message: "An unknown error occurred." });
+      }
     }
+  };
+
+  const handleError = (error: AuthError) => {
+    alert(error.message);
   };
 
   return (
@@ -56,7 +69,7 @@ export default function LoginPage() {
             </Button>
           </div>
           <p className="text-center text-sm">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <a href="/signup" className="text-blue-600 underline">
               Signup
             </a>

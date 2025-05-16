@@ -48,6 +48,23 @@ const tutorials = [
   },
 ];
 
+interface EditorError {
+  message: string;
+  code?: string;
+}
+
+interface EditorProps {
+  error: {
+    message: string;
+    code?: string;
+  };
+}
+
+const handleError = ({ message, code }: EditorProps["error"]) => {
+  console.error(`Error: ${message}`, code);
+  // ...existing code...
+};
+
 export default function CodeEditor() {
   // State hooks with lazy initialization from localStorage
   const [code, setCode] = useState<string>(
@@ -319,7 +336,9 @@ export default function CodeEditor() {
               <Checkbox
                 id="toggle-tutorials"
                 checked={showTutorials}
-                onCheckedChange={(checked) => setShowTutorials(checked === true)}
+                onCheckedChange={(checked) =>
+                  setShowTutorials(checked === true)
+                }
               />
               <label
                 htmlFor="toggle-tutorials"
@@ -375,7 +394,7 @@ export default function CodeEditor() {
 
                   {showOutput && (
                     <div className="flex flex-col flex-grow overflow-auto bg-white dark:bg-gray-900 rounded-md p-3 font-mono text-sm whitespace-pre-wrap border border-gray-300 dark:border-gray-700">
-                      {aiOutput || "AI generated code will appear here..."}
+                      {aiOutput || "AI output will appear here..."}
                     </div>
                   )}
 

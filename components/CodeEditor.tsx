@@ -2,14 +2,22 @@
 "use client";
 import Editor from "@monaco-editor/react";
 
-export default function CodeEditor({ value, onChange }: any) {
+interface EditorProps {
+  value: string;
+  onChange: (value: string) => void;
+  language?: string;
+}
+
+const CodeEditor = (props: EditorProps) => {
   return (
     <Editor
       height="500px"
       defaultLanguage="javascript"
       theme="vs-dark"
-      value={value}
-      onChange={onChange}
+      value={props.value}
+      onChange={(value) => props.onChange(value ?? "")}
     />
   );
-}
+};
+
+export default CodeEditor;

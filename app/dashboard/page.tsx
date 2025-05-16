@@ -87,6 +87,8 @@ const lottieContainerVariants = {
   },
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user } = useAuth();
