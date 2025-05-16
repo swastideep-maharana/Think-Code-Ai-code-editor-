@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "npm install --legacy-peer-deps && next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -57,9 +57,9 @@
     "next": "15.3.2",
     "next-auth": "^4.24.11",
     "next-themes": "^0.4.6",
-    "react": "^19.1.0",
+    "react": "^18.2.0",
     "react-day-picker": "^8.10.1",
-    "react-dom": "^19.0.0",
+    "react-dom": "^18.2.0",
     "react-hook-form": "^7.56.3",
     "react-resizable-panels": "^3.0.2",
     "react-router-dom": "^7.6.0",
