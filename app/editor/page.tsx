@@ -49,40 +49,40 @@ const tutorials = [
 ];
 
 export default function CodeEditor() {
-  const [code, setCode] = useState(
+  // State hooks with lazy initialization from localStorage
+  const [code, setCode] = useState<string>(
     () => localStorage.getItem("code") || "<!-- Start coding here -->"
   );
-  const [darkMode, setDarkMode] = useState(
+  const [darkMode, setDarkMode] = useState<boolean>(
     () => localStorage.getItem("theme") === "dark"
   );
-  const [showAI, setShowAI] = useState(() =>
+  const [showAI, setShowAI] = useState<boolean>(() =>
     JSON.parse(localStorage.getItem("showAI") ?? "true")
   );
-  const [showPreview, setShowPreview] = useState(() =>
+  const [showPreview, setShowPreview] = useState<boolean>(() =>
     JSON.parse(localStorage.getItem("showPreview") ?? "true")
   );
-  const [showOutput, setShowOutput] = useState(() =>
+  const [showOutput, setShowOutput] = useState<boolean>(() =>
     JSON.parse(localStorage.getItem("showOutput") ?? "false")
   );
-  const [showTutorials, setShowTutorials] = useState(() =>
+  const [showTutorials, setShowTutorials] = useState<boolean>(() =>
     JSON.parse(localStorage.getItem("showTutorials") ?? "false")
   );
 
-  const [aiOutput, setAiOutput] = useState("");
-  const [prompt, setPrompt] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [aiOutput, setAiOutput] = useState<string>("");
+  const [prompt, setPrompt] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const editorRef = useRef<any>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
 
+  // Update live preview iframe whenever code changes
   useEffect(() => {
     if (!iframeRef.current) return;
     const doc =
       iframeRef.current.contentDocument ||
-      (iframeRef.current.contentWindow
-        ? iframeRef.current.contentWindow.document
-        : null);
+      iframeRef.current.contentWindow?.document;
     if (doc) {
       doc.open();
       doc.write(code);
@@ -90,6 +90,7 @@ export default function CodeEditor() {
     }
   }, [code]);
 
+  // Persist state to localStorage
   useEffect(() => {
     localStorage.setItem("code", code);
   }, [code]);
@@ -114,6 +115,7 @@ export default function CodeEditor() {
     localStorage.setItem("showTutorials", JSON.stringify(showTutorials));
   }, [showTutorials]);
 
+  // Read code from URL param (base64 encoded) if present
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -122,15 +124,19 @@ export default function CodeEditor() {
         const decoded = atob(codeParam);
         setCode(decoded);
       }
-    } catch {}
+    } catch {
+      // ignore errors
+    }
   }, []);
 
+  // Monaco editor reference setup
   function handleEditorDidMount(
     editor: import("monaco-editor").editor.IStandaloneCodeEditor
   ) {
     editorRef.current = editor;
   }
 
+  // Editor commands
   function undo() {
     editorRef.current?.trigger("keyboard", "undo", null);
   }
@@ -140,19 +146,27 @@ export default function CodeEditor() {
   }
 
   function format() {
-    editorRef.current?.getAction("editor.action.formatDocument").run();
+    editorRef.current?.getAction("editor.action.formatDocument")?.run();
   }
 
+  // Export code as .html file
   function exportCode() {
-    const blob = new Blob([code], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "code.html";
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const blob = new Blob([code], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "code.html";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Failed to export code.");
+    }
   }
 
+  // Create shareable link with base64 encoded code
   function share() {
     try {
       const encoded = btoa(code);
@@ -164,8 +178,9 @@ export default function CodeEditor() {
     }
   }
 
+  // Fake AI code generation (simulate async)
   async function generateAI() {
-    if (!prompt.trim()) return alert("Please enter a prompt, silly!");
+    if (!prompt.trim()) return alert("Please enter a prompt!");
     setLoading(true);
     setAiOutput("");
     try {
@@ -179,110 +194,73 @@ export default function CodeEditor() {
     }
   }
 
+  // Append AI output to current code, clear prompt and AI output
   function appendAIOutput() {
+    if (!aiOutput.trim()) return;
     setCode((prev) => prev + "\n\n" + aiOutput);
     setAiOutput("");
     setPrompt("");
     promptRef.current?.blur();
   }
 
+  // Auto select prompt text on focus for convenience
   function handlePromptFocus(e: FocusEvent<HTMLTextAreaElement>) {
     e.target.select();
   }
 
-  const panelWidth = "33%";
-
   return (
     <ProtectedRoute>
       <div
-        className={`flex flex-col h-screen ${
-          darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"
+        className={`flex flex-col h-screen transition-colors duration-300 ${
+          darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
         }`}
       >
-        <header
-          className={`flex items-center justify-between p-4 border-b ${
-            darkMode ? "border-gray-700" : "border-gray-300"
-          }`}
-        >
-          <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-2">
+        {/* Header */}
+        <header className="flex items-center justify-between p-4 border-b border-gray-300 dark:border-gray-700 bg-opacity-80 backdrop-blur-sm sticky top-0 z-10">
+          <h1 className="text-3xl font-extrabold flex items-center gap-3 select-none">
             <PlayIcon className="w-8 h-8 text-blue-500 animate-pulse" />
-            Code Playground 🎮
+            DevPilot
           </h1>
-          <div className="flex flex-wrap gap-2 items-center">
-            <Button
-              variant="outline"
-              onClick={() => setDarkMode((d) => !d)}
-              aria-label="Toggle dark mode"
-              className="flex items-center gap-1"
-            >
+
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setDarkMode(!darkMode)}>
               {darkMode ? (
                 <>
-                  <SunIcon className="w-5 h-5" />
-                  Light Mode
+                  <SunIcon className="w-5 h-5 mr-1" /> Light Mode
                 </>
               ) : (
                 <>
-                  <MoonIcon className="w-5 h-5" />
-                  Dark Mode
+                  <MoonIcon className="w-5 h-5 mr-1" /> Dark Mode
                 </>
               )}
             </Button>
-            <Button
-              variant="ghost"
-              onClick={undo}
-              aria-label="Undo"
-              className="flex items-center gap-1"
-            >
+
+            <Button variant="ghost" onClick={undo} title="Undo">
               <ArrowUturnLeftIcon className="w-5 h-5" />
-              Undo
             </Button>
-            <Button
-              variant="ghost"
-              onClick={redo}
-              aria-label="Redo"
-              className="flex items-center gap-1"
-            >
+
+            <Button variant="ghost" onClick={redo} title="Redo">
               <ArrowUturnRightIcon className="w-5 h-5" />
-              Redo
             </Button>
-            <Button
-              variant="ghost"
-              onClick={format}
-              aria-label="Format Code"
-              className="flex items-center gap-1"
-            >
+
+            <Button variant="ghost" onClick={format} title="Format Document">
               <ArrowPathIcon className="w-5 h-5" />
-              Format
             </Button>
-            <Button
-              variant="ghost"
-              onClick={exportCode}
-              aria-label="Export Code"
-              className="flex items-center gap-1"
-            >
+
+            <Button variant="ghost" onClick={exportCode} title="Export as HTML">
               <DocumentArrowDownIcon className="w-5 h-5" />
-              Export
             </Button>
-            <Button
-              variant="ghost"
-              onClick={share}
-              aria-label="Share Code"
-              className="flex items-center gap-1"
-            >
+
+            <Button variant="ghost" onClick={share} title="Copy Shareable Link">
               <ShareIcon className="w-5 h-5" />
-              Share
             </Button>
           </div>
         </header>
 
+        {/* Main Content */}
         <main className="flex flex-grow overflow-hidden">
-          {/* Editor panel */}
-          <section
-            style={{ width: panelWidth }}
-            className={`border-r ${
-              darkMode ? "border-gray-700" : "border-gray-300"
-            }`}
-          >
+          {/* Editor Panel */}
+          <section className="w-1/3 border-r border-gray-300 dark:border-gray-700">
             <MonacoEditor
               language="html"
               theme={darkMode ? "vs-dark" : "vs-light"}
@@ -291,111 +269,170 @@ export default function CodeEditor() {
               onMount={handleEditorDidMount}
               options={{
                 minimap: { enabled: false },
-                fontSize: 16,
+
+                fontSize: 14,
+                fontFamily: "Fira Code, monospace",
                 wordWrap: "on",
                 automaticLayout: true,
+                smoothScrolling: true,
+                tabSize: 2,
+                formatOnPaste: true,
+                formatOnType: true,
               }}
               height="100%"
               width="100%"
             />
           </section>
-
-          {/* Preview & AI panel */}
-          <section
-            style={{ width: panelWidth }}
-            className="flex flex-col border-r border-gray-300"
-          >
-            <div className="flex items-center justify-between p-3 border-b">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <BoltIcon className="w-6 h-6 text-purple-500" />
-                AI Code Generator
-              </h2>
-              <Checkbox
-                checked={showAI}
-                onCheckedChange={(checked) => setShowAI(!!checked)}
-                aria-label="Toggle AI Generator panel"
-              />
-            </div>
-
-            {showAI && (
-              <div className="flex flex-col p-3 space-y-2 h-full overflow-auto">
-                <Textarea
-                  ref={promptRef}
-                  placeholder="Ask AI for code help, e.g. 'Create a cool button' 🎨"
-                  value={prompt}
-                  onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                    setPrompt(e.target.value)
-                  }
-                  onFocus={handlePromptFocus}
-                  className="resize-none"
-                  rows={4}
-                />
+          {/* Preview Panel */}
+          {showPreview && (
+            <section className="flex flex-col w-1/3 border-r border-gray-300 dark:border-gray-700">
+              <div className="p-2 bg-gray-200 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 flex justify-between items-center">
+                <h2 className="font-semibold">Live Preview</h2>
                 <Button
-                  onClick={generateAI}
-                  disabled={loading}
-                  variant="default"
-                  className="flex items-center gap-2 justify-center"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowPreview(false)}
+                  aria-label="Close Preview"
                 >
-                  {loading ? (
-                    <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <BoltIcon className="w-5 h-5" />
-                      Generate AI Code
-                    </>
-                  )}
+                  ✕
                 </Button>
-                {aiOutput && (
-                  <>
-                    <pre
-                      className={`whitespace-pre-wrap p-2 rounded border ${
-                        darkMode
-                          ? "bg-gray-800 border-gray-700"
-                          : "bg-gray-100 border-gray-300"
-                      }`}
-                    >
-                      {aiOutput}
-                    </pre>
-                    <Button
-                      variant="outline"
-                      onClick={appendAIOutput}
-                      className="flex items-center gap-2"
-                    >
-                      <ArrowPathIcon className="w-5 h-5" />
-                      Append to Editor
-                    </Button>
-                  </>
-                )}
               </div>
-            )}
-          </section>
-
-          {/* Preview panel */}
-          <section style={{ width: panelWidth }} className="relative">
-            <div className="p-3 border-b flex items-center justify-between">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <PlayIcon className="w-6 h-6 text-green-500" />
-                Live Preview
-              </h2>
-              <Checkbox
-                checked={showPreview}
-                onCheckedChange={(checked) => setShowPreview(!!checked)}
-                aria-label="Toggle live preview"
-              />
-            </div>
-            {showPreview && (
               <iframe
+                title="Live preview"
                 ref={iframeRef}
-                title="live preview"
                 sandbox="allow-scripts allow-same-origin"
-                className="w-full h-full"
+                className="flex-grow w-full border-none"
               />
-            )}
-          </section>
+            </section>
+          )}
+
+          {/* AI Panel */}
+          {showAI && (
+            <section className="flex flex-col w-1/3 bg-gray-50 dark:bg-gray-900 p-3">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-lg font-semibold">AI Code Generator</h2>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowAI(false)}
+                  aria-label="Close AI Panel"
+                >
+                  ✕
+                </Button>
+              </div>
+
+              <Textarea
+                ref={promptRef}
+                placeholder="Describe what code you want AI to generate..."
+                value={prompt}
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                  setPrompt(e.target.value)
+                }
+                onFocus={handlePromptFocus}
+                className="mb-2"
+                rows={4}
+              />
+
+              <Button onClick={generateAI} disabled={loading} className="mb-3">
+                <BoltIcon className="w-5 h-5 mr-2" />
+                {loading ? "Generating..." : "Generate AI Code"}
+              </Button>
+
+              {aiOutput && (
+                <div className="flex flex-col flex-grow overflow-auto rounded border border-gray-300 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 font-mono text-sm whitespace-pre-wrap">
+                  {aiOutput}
+                </div>
+              )}
+
+              {aiOutput && (
+                <Button
+                  onClick={appendAIOutput}
+                  className="mt-2"
+                  variant="outline"
+                  disabled={loading}
+                >
+                  Append to Code
+                </Button>
+              )}
+            </section>
+          )}
+
+          {/* Output Console */}
+          {showOutput && (
+            <section className="flex flex-col w-1/3 bg-black text-green-400 font-mono text-sm font-bold p-4 overflow-auto">
+              {/* This area can show logs - implement below */}
+              {/* You can add your log messages here */}
+              <p>No output yet.</p>
+            </section>
+          )}
+
+          {/* Tutorials Panel */}
+          {showTutorials && (
+            <section className="fixed top-16 right-4 w-80 max-h-[80vh] overflow-auto rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg p-4 z-50">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-xl font-bold">Tutorials</h3>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowTutorials(false)}
+                  aria-label="Close Tutorials"
+                >
+                  ✕
+                </Button>
+              </div>
+              {tutorials.map(({ title, content }, i) => (
+                <div
+                  key={i}
+                  className="mb-4 last:mb-0 p-3 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                  onClick={() => {
+                    setShowTutorials(false);
+                    alert(content); // simple tutorial display - can be improved
+                  }}
+                >
+                  <h4 className="font-semibold">{title}</h4>
+                </div>
+              ))}
+            </section>
+          )}
         </main>
 
-        <footer className="p-2 text-center text-sm text-gray-500">
-          Made with 💙 and a sprinkle of AI magic! ✨
+        {/* Footer Toolbar */}
+        <footer className="flex justify-center items-center gap-3 p-3 border-t border-gray-300 dark:border-gray-700 bg-opacity-80 backdrop-blur-sm">
+          <Checkbox
+            id="togglePreview"
+            checked={showPreview}
+            onCheckedChange={(val) => setShowPreview(Boolean(val))}
+          />
+          <label htmlFor="togglePreview" className="select-none">
+            Live Preview
+          </label>
+
+          <Checkbox
+            id="toggleAI"
+            checked={showAI}
+            onCheckedChange={(val) => setShowAI(Boolean(val))}
+          />
+          <label htmlFor="toggleAI" className="select-none">
+            AI Generator
+          </label>
+
+          <Checkbox
+            id="toggleOutput"
+            checked={showOutput}
+            onCheckedChange={(val) => setShowOutput(Boolean(val))}
+          />
+          <label htmlFor="toggleOutput" className="select-none">
+            Output Console
+          </label>
+
+          <Checkbox
+            id="toggleTutorials"
+            checked={showTutorials}
+            onCheckedChange={(val) => setShowTutorials(Boolean(val))}
+          />
+          <label htmlFor="toggleTutorials" className="select-none">
+            Tutorials
+          </label>
         </footer>
       </div>
     </ProtectedRoute>
